@@ -1,10 +1,8 @@
-﻿using Microsoft.Win32;
-using obnovlytor.Properties;
+﻿using obnovlytor.Properties;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Net;
 using System.Text;
 
 namespace obnovlytor
@@ -16,39 +14,24 @@ namespace obnovlytor
         {
             if (args.Length == 1 && args[0] == "Update")
             {
-                //try
-                //{
-                //    FTP.GetFolder();
-                //}
-                //catch (Exception ex)
-                //{
-                //    Console.WriteLine(ex);
-                //    Console.ReadLine();
-                //}
-                //try
-                //{
-                //    if (Function.Check() == false)
-                //    {
-                //        //Function.Update();
-                //        Function.GetVersion();
-                //    }
-                //    else
-                //    {
-                //        Function.GetVersion();
-                //    }
-                //}
-                //catch (Exception ex)
-                //{
-                //    Console.WriteLine(ex);
-                //    Console.ReadLine();
-                //}
-
-                Function.Start();
+                if (!string.IsNullOrEmpty(FTP.getURI(null)))
+                {
+                    FTP.GetFolder();
+                    if (Function.Check() == false)
+                    {
+                        Function.GetVersion();
+                    }
+                    else
+                    {
+                        Function.GetVersion();
+                    }
+                    Function.Start();
+                }
+                else
+                {
+                    Function.Start();
+                }
             }
-            //else if (args.Length == 1 && args[0] == "test")
-            //{
-            //    Function.LocalInstall();
-            //}
             else
             {
                 if (Reqistry.CheckAgent() == true)
@@ -57,33 +40,23 @@ namespace obnovlytor
                     {
                         File.Delete(Data.Path + @"\Parametrs.xml");
                         XML.GenParametrsXML();
-                        FTP.GetFolder();
-                        if (Function.Check() == false)
+                        if (!string.IsNullOrEmpty(FTP.getURI(null)))
                         {
-                            Function.Update();
+                            FTP.GetFolder();
+                            if (Function.Check() == false)
+                            {
+                                Function.Update();
+                            }
+                        }
+                        else
+                        {
+                            Function.LocalInstall();
                         }
                     }
                     else
                     {
-
-                        try
-                        {
-                            XML.GenParametrsXML();
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine(ex);
-                            Console.ReadLine();
-                        }
-                        try
-                        {
-                            FTP.GetFolder();
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine(ex);
-                            Console.ReadLine();
-                        }
+                        XML.GenParametrsXML();
+                        FTP.GetFolder();
                         if (Function.Check() == false)
                         {
                             Function.Update();
@@ -210,154 +183,6 @@ namespace obnovlytor
             catch (Exception e)
             {
                 Data.Log += e;
-            }
-        }
-    }
-    class FTP
-    {
-        public static void Download(string File)
-        {
-            FtpWebRequest request = (FtpWebRequest)WebRequest.Create(getURI(File));
-            request.Method = WebRequestMethods.Ftp.DownloadFile;
-            request.Credentials = new NetworkCredential(Request.Login, Request.Password);
-            request.EnableSsl = false;
-            FtpWebResponse response = (FtpWebResponse)request.GetResponse();
-
-            Stream responseStream = response.GetResponseStream();
-
-            FileStream fs = new FileStream(File, FileMode.Create);
-
-            byte[] buffer = new byte[64];
-            int size = 0;
-            while ((size = responseStream.Read(buffer, 0, buffer.Length)) > 0)
-            {
-                fs.Write(buffer, 0, size);
-            }
-            fs.Close();
-            response.Close();
-        }
-        public static void GetFolder()
-        {
-            FtpWebRequest listRequest = (FtpWebRequest)WebRequest.Create(getURI(null));
-            listRequest.Method = WebRequestMethods.Ftp.ListDirectoryDetails;
-            listRequest.Credentials = new NetworkCredential(Request.Login, Request.Password);
-            using (FtpWebResponse listResponse = (FtpWebResponse)listRequest.GetResponse())
-            using (Stream listStream = listResponse.GetResponseStream())
-            using (StreamReader listReader = new StreamReader(listStream))
-            {
-                while (!listReader.EndOfStream)
-                {
-                    Request.FileList.Add(listReader.ReadLine());
-                }
-            }
-
-        }
-        static string getURI(string File)
-        {
-            string uri = string.Empty;
-            if (string.IsNullOrEmpty(File))
-            {
-                uri = Request.Head + Request.ServerDDNS + Request.Port + Request.Folder;
-                if (CheckFTP(uri) == false)
-                {
-                    uri = Request.Head + Request.ServerRezerv + Request.Port + Request.Folder;
-                    if (CheckFTP(uri) == false)
-                    {
-                        uri = Request.Head + Request.ServetRezerv2 + Request.Port + Request.Folder;
-                    }
-                }
-            }
-            else
-            {
-                uri = Request.Head + Request.ServerDDNS + Request.Port + Request.Folder + File;
-                if (CheckFTP(uri) == false)
-                {
-                    uri = Request.Head + Request.ServerDDNS + Request.Port + Request.Folder + File;
-                    if (CheckFTP(uri) == false)
-                    {
-                        uri = Request.Head + Request.ServerDDNS + Request.Port + Request.Folder + File;
-                        if (CheckFTP(uri) == false)
-                        {
-                            Function.LocalInstall();
-                        }
-                    }
-                }
-            }
-            return uri;
-        }
-        static bool CheckFTP(string uri)
-        {
-            bool check = false;
-            FtpWebRequest request = (FtpWebRequest)WebRequest.Create(uri);
-            request.Method = WebRequestMethods.Ftp.ListDirectoryDetails;
-            request.Credentials = new NetworkCredential(Request.Login, Request.Password);
-            FtpWebResponse response = (FtpWebResponse)request.GetResponse();
-            switch (response.StatusCode)
-            {
-                case FtpStatusCode.AccountNeeded:
-                    check = false;
-                    break;
-                case FtpStatusCode.OpeningData:
-                    check = true;
-                    break;
-                case FtpStatusCode.CommandOK:
-                    check = true;
-                    break;
-            }
-            response.Close();
-            return check;
-        }
-    }
-    class Log
-    {
-        internal static void Write()
-        {
-            if (!string.IsNullOrEmpty(Data.Log))
-            {
-                using (FileStream fstream = new FileStream($"{Data.Path}\\LogBackupAgent.txt", FileMode.OpenOrCreate))
-                {
-                    using (StreamWriter sw = new StreamWriter(fstream, System.Text.Encoding.Default))
-                    {
-                        sw.Write(Data.Log);
-                    }
-                }
-
-            }
-        }
-    }
-    class Reqistry
-    {
-        public static void GetKey()
-        {
-            try
-            {
-                RegistryKey key = Registry.LocalMachine;
-                key = key.OpenSubKey(@"SYSTEM\CurrentControlSet\Services\1CBackupAgent");
-                Version.ImagePathAgent = key.GetValue("ImagePath").ToString().Replace("agentNET.exe", "").Replace('"', ' ');
-            }
-            catch (Exception ex)
-            {
-                Data.Log += ex;
-            }
-        }
-        public static bool CheckAgent()
-        {
-            try
-            {
-                RegistryKey key = Registry.LocalMachine;
-                if (key.OpenSubKey(@"SYSTEM\CurrentControlSet\Services\1CBackupAgent") == null)
-                {
-                    return false;
-                }
-                else
-                {
-                    return true;
-                }
-            }
-            catch (Exception ex)
-            {
-                Data.Log += ex;
-                return false;
             }
         }
     }
