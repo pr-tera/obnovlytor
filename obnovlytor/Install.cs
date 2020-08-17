@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.IO;
 using System.Net;
 
 namespace obnovlytor
@@ -13,7 +12,7 @@ namespace obnovlytor
             {
                 if (InstallAgent() == true)
                 {
-                    Directory.Delete(Data.Path + @"\backupagentTemp", true);
+                    IO.DelDir(IOs.RootDir + IOs.backupagentTemp);
                     return true;
                 }
                 else
@@ -28,25 +27,19 @@ namespace obnovlytor
         }
         private static string Temp()
         {
-            string backupagentTemp = Data.Path + @"\backupagentTemp";
-            if (!Directory.Exists(backupagentTemp))
+            if (IO.CheckDirExists(IOs.RootDir + IOs.backupagentTemp) == false)
             {
                 try
                 {
-                    Directory.CreateDirectory(backupagentTemp);
+                    IO.CreatFolder(IOs.RootDir + IOs.backupagentTemp);
                 }
                 catch (Exception e)
                 {
                     Console.WriteLine(e);
-                    Data.Log += $"{DateTime.Now} {e} \n";
+                    Logs.Log += $"{DateTime.Now} {e} \n";
                 }
             }
-            //else
-            //{
-            //    Directory.Delete(backupagentTemp, true);
-            //    Temp();
-            //}
-            return backupagentTemp;
+            return IOs.RootDir + IOs.backupagentTemp;
         }
         private static bool DownloadAgetn()
         {
@@ -62,7 +55,7 @@ namespace obnovlytor
             catch (Exception e)
             {
                 Console.WriteLine($"При загрузке произошла ошибка:\n{e}");
-                Data.Log += $"{DateTime.Now} {e} \n";
+                Logs.Log += $"{DateTime.Now} {e} \n";
                 return false;
             }
         }
@@ -79,7 +72,7 @@ namespace obnovlytor
             catch (Exception e)
             {
                 Console.WriteLine(e);
-                Data.Log += $"{DateTime.Now} {e} \n";
+                Logs.Log += $"{DateTime.Now} {e} \n";
                 return false;
             }
         }

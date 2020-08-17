@@ -38,6 +38,7 @@
     <Reference Include="PresentationCore" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.ServiceProcess" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Data" />
@@ -47,6 +48,8 @@
     <Compile Include="Firstsetting.cs" />
     <Compile Include="FTP.cs" />
     <Compile Include="Install.cs" />
+    <Compile Include="IO.cs" />
+    <Compile Include="LocalInstall.cs" />
     <Compile Include="Log.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -56,6 +59,8 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="Reqistry.cs" />
+    <Compile Include="Service.cs" />
+    <Compile Include="Version.cs" />
     <Compile Include="XML.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -69,6 +74,9 @@
     <None Include="bin\Debug\backup.bat" />
     <None Include="bin\Debug\clean.bat" />
     <None Include="bin\Debug\ver.ver" />
+    <None Include="Resources\backup.bat" />
+    <None Include="Resources\clean.bat" />
+    <None Include="Resources\ver.ver" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\1cbacupcloud3.5.exe" />

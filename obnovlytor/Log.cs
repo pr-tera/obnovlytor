@@ -6,17 +6,20 @@ namespace obnovlytor
     {
         internal static void Write()
         {
-            if (!string.IsNullOrEmpty(Data.Log))
+            if (!string.IsNullOrEmpty(Logs.Log))
             {
-                using (FileStream fstream = new FileStream($"{Data.Path}\\LogBackupAgent.txt", FileMode.OpenOrCreate))
+                using (FileStream fstream = new FileStream($"{IOs.RootDir}\\update.log", FileMode.OpenOrCreate))
                 {
                     using (StreamWriter sw = new StreamWriter(fstream, System.Text.Encoding.Default))
                     {
-                        sw.Write(Data.Log);
+                        sw.Write(Logs.Log);
                     }
                 }
-
             }
         }
+    }
+    struct Logs
+    {
+        internal static string Log { get; set; }
     }
 }

@@ -1,101 +1,196 @@
-﻿using System.IO;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Net;
 
 namespace obnovlytor
 {
     class FTP
     {
-        public static void Download(string File)
+        internal static bool Download()
         {
-            FtpWebRequest request = (FtpWebRequest)WebRequest.Create(getURI(File));
-            request.Method = WebRequestMethods.Ftp.DownloadFile;
-            request.Credentials = new NetworkCredential(Request.Login, Request.Password);
-            request.EnableSsl = false;
-            FtpWebResponse response = (FtpWebResponse)request.GetResponse();
-
-            Stream responseStream = response.GetResponseStream();
-
-            FileStream fs = new FileStream(File, FileMode.Create);
-
-            byte[] buffer = new byte[64];
-            int size = 0;
-            while ((size = responseStream.Read(buffer, 0, buffer.Length)) > 0)
+            bool check = false;
+            if (!string.IsNullOrEmpty(_checkFTPServer()))
             {
-                fs.Write(buffer, 0, size);
-            }
-            fs.Close();
-            response.Close();
-        }
-        public static void GetFolder()
-        {
-            FtpWebRequest listRequest = (FtpWebRequest)WebRequest.Create(getURI(null));
-            listRequest.Method = WebRequestMethods.Ftp.ListDirectoryDetails;
-            listRequest.Credentials = new NetworkCredential(Request.Login, Request.Password);
-            using (FtpWebResponse listResponse = (FtpWebResponse)listRequest.GetResponse())
-            using (Stream listStream = listResponse.GetResponseStream())
-            using (StreamReader listReader = new StreamReader(listStream))
-            {
-                while (!listReader.EndOfStream)
+                foreach (var file in FTPuri.FileList)
                 {
-                    Request.FileList.Add(listReader.ReadLine());
-                }
-            }
-
-        }
-        public static string getURI(string File)
-        {
-            string uri = string.Empty;
-            if (string.IsNullOrEmpty(File))
-            {
-                uri = Request.Head + Request.ServerDDNS + Request.Port + Request.Folder;
-                if (CheckFTP(uri) == false)
-                {
-                    uri = Request.Head + Request.ServerRezerv + Request.Port + Request.Folder;
-                    if (CheckFTP(uri) == false)
+                    string[] tokens = file.Split(new[] { ' ' }, 9, StringSplitOptions.RemoveEmptyEntries);
+                    string filename = tokens[8];
+                    string filepath = IOs.RootDir + filename;
+                    if (IO.CheckFileExists(filepath) == true)
                     {
-                        uri = Request.Head + Request.ServetRezerv2 + Request.Port + Request.Folder;
+                        if (IO.DelFile(filepath) == true)
+                        {
+                            _download(filename);
+                            Logs.Log += $"{DateTime.Now} Началась загрузка файла {filename}\n";
+                            if (IO.CheckFileExists(filepath) == true)
+                            {
+                                Logs.Log += $"{DateTime.Now} Файл {filename} успешно загружен\n";
+                                check = true;
+                            }
+                            else
+                            {
+                                Logs.Log += $"{DateTime.Now} Не удалось загрузить файл {filename}\n";
+                                check = false;
+                            }
+                        }
+                        else
+                        {
+                            Logs.Log += $"{DateTime.Now} Не удалось начать загрузку {filename}\n";
+                            check = false;
+                        }
+                    }
+                    else
+                    {
+                        _download(filename);
+                        Logs.Log += $"{DateTime.Now} Началась загрузка файла {filename}\n";
+                        if (IO.CheckFileExists(filepath) == true)
+                        {
+                            Logs.Log += $"{DateTime.Now} Файл {filename} успешно загружен\n";
+                            check = true;
+                        }
+                        else
+                        {
+                            Logs.Log += $"{DateTime.Now} Не удалось загрузить файл {filename}\n";
+                            check = false;
+                        }
                     }
                 }
             }
             else
             {
-                uri = Request.Head + Request.ServerDDNS + Request.Port + Request.Folder + File;
-                if (CheckFTP(uri) == false)
+                Logs.Log += $"\n{DateTime.Now} FT1004\n";
+                check = false;
+            }
+            return check;
+        }
+        protected static bool _download(string File)
+        {
+            try
+            {
+                FtpWebRequest request = (FtpWebRequest)WebRequest.Create(_uri(File, _checkFTPServer()));
+                request.Method = WebRequestMethods.Ftp.DownloadFile;
+                request.Credentials = new NetworkCredential(FTPuri.Login, FTPuri.Password);
+                request.EnableSsl = false;
+                FtpWebResponse response = (FtpWebResponse)request.GetResponse();
+                Stream responseStream = response.GetResponseStream();
+                FileStream fs = new FileStream(File, FileMode.Create);
+                byte[] buffer = new byte[64];
+                int size = 0;
+                while ((size = responseStream.Read(buffer, 0, buffer.Length)) > 0)
                 {
-                    uri = Request.Head + Request.ServerDDNS + Request.Port + Request.Folder + File;
-                    if (CheckFTP(uri) == false)
+                    fs.Write(buffer, 0, size);
+                }
+                fs.Close();
+                response.Close();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Logs.Log += $"{DateTime.Now} {ex}\n";
+                return false;
+            }
+        }
+        internal static bool GetListFolber()
+        {
+            if (string.IsNullOrEmpty(_checkFTPServer()))
+            {
+                return false;
+            }
+            else
+            {
+                FtpWebRequest request = (FtpWebRequest)WebRequest.Create(_uri(null, _checkFTPServer()));
+                request.Method = WebRequestMethods.Ftp.ListDirectoryDetails;
+                request.Credentials = new NetworkCredential(FTPuri.Login, FTPuri.Password);
+                using (FtpWebResponse response = (FtpWebResponse)request.GetResponse())
+                using (Stream listStream = response.GetResponseStream())
+                using (StreamReader listReader = new StreamReader(listStream))
+                {
+                    while (!listReader.EndOfStream)
                     {
-                        uri = Request.Head + Request.ServerDDNS + Request.Port + Request.Folder + File;
-                        if (CheckFTP(uri) == false)
-                        {
-                            Function.LocalInstall();
-                        }
+                        FTPuri.FileList.Add(listReader.ReadLine());
                     }
                 }
+                return true;
             }
-            return uri;
         }
-        static bool CheckFTP(string uri)
+        protected static string _uri(string File, string Server)
         {
-            bool check = false;
-            FtpWebRequest request = (FtpWebRequest)WebRequest.Create(uri);
-            request.Method = WebRequestMethods.Ftp.ListDirectoryDetails;
-            request.Credentials = new NetworkCredential(Request.Login, Request.Password);
+            if (string.IsNullOrEmpty(File))
+            {
+                string _uri = FTPuri.Head + Server + FTPuri.Port + FTPuri.Folder;
+                return _uri;
+            }
+            else
+            {
+                string _uri = FTPuri.Head + Server + FTPuri.Port + FTPuri.Folder + File;
+                return _uri;
+            }
+        }
+        protected static bool _checkFTP(string Server)
+        {
+            bool _check = false;
+            FtpWebRequest request = (FtpWebRequest)WebRequest.Create(_uri(null, Server));
+            request.Method = WebRequestMethods.Ftp.ListDirectory;
+            request.Credentials = new NetworkCredential(FTPuri.Login, FTPuri.Password);
             FtpWebResponse response = (FtpWebResponse)request.GetResponse();
             switch (response.StatusCode)
             {
                 case FtpStatusCode.AccountNeeded:
-                    check = false;
+                    _check = false;
                     break;
                 case FtpStatusCode.OpeningData:
-                    check = true;
+                    _check = true;
                     break;
                 case FtpStatusCode.CommandOK:
-                    check = true;
+                    _check = true;
                     break;
             }
             response.Close();
-            return check;
+            return _check;
         }
+        protected static string _checkFTPServer()
+        {
+            string _server = string.Empty;
+            string[] server = { FTPuri.ServerDDNS, FTPuri.ServerRezerv, FTPuri.ServetRezerv2 };
+            for (int i = 0; i < 2; i++)
+            {
+                if (_checkFTP(server[i]) == true)
+                {
+                    _server = server[i]; 
+                    break;
+                }
+                else
+                {
+                    switch (i)
+                    {
+                        case 0:
+                            Logs.Log += $"\n{DateTime.Now} FT1001";
+                            break;
+                        case 1:
+                            Logs.Log += $"\n{DateTime.Now} FT1002";
+                            break;
+                        case 2:
+                            Logs.Log += $"\n{DateTime.Now} FT1003";
+                            break;
+                    }
+                }
+            }
+            return _server;
+        }
+    }
+    struct FTPuri
+    {
+        internal static string Head { get; } = "ftp://";
+        internal static string ServerDDNS { get; } = "1eskaftp.hldns.ru";
+        internal static string ServerRezerv { get; } = "37.44.44.180";
+        internal static string ServetRezerv2 { get; } = "194.87.94.189";
+        internal static string Port { get; } = ":22526";
+        internal static string Login { get; } = "prftp";
+        internal static string Password { get; } = "NWaSTvpe7buLscifP1dJHclpbUNxf9Xn1FChQQQTCB";
+        //internal static string Folder { get; } = "/cloud2/";
+        internal static string Folder { get; } = "/cloud2/4.5/";
+        internal static List<string> FileList = new List<string>();
+        //internal static string File { get; set; }
     }
 }

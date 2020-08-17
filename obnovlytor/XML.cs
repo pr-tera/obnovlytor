@@ -17,7 +17,7 @@ namespace obnovlytor
             XmlElement xOptions = XmlParam.CreateElement("Options");
             XmlParam.AppendChild(xOptions);
             //PublicKey
-            Data.PublicKey = DateTime.Now + Crypto.PrivatKey + DateTime.Now + Data.Path;
+            Data.PublicKey = DateTime.Now + Crypto.PrivatKey + DateTime.Now + IOs.RootDir;
             XmlElement xPublicKey = XmlParam.CreateElement("PublicKey");
             xPublicKey.InnerText = Crypto.Encrypt(Data.PublicKey, Crypto.PrivatKey);
             xOptions.AppendChild(xPublicKey);
@@ -110,7 +110,6 @@ namespace obnovlytor
             XmlElement xDays = XmlParam.CreateElement("Days");
             xDays.InnerText = Data.Days;
             xOptions.AppendChild(xDays);
-            SetPath();
             if (!string.IsNullOrEmpty(Data.Login) && !string.IsNullOrEmpty(Data.Password) && !string.IsNullOrEmpty(Data.PublicKey))
             {
                 /*вызвать функцию для активации
@@ -119,13 +118,13 @@ namespace obnovlytor
                  */
                 try
                 {
-                    XmlParam.Save(Data.Path + @"/Parametrs.xml");
+                    XmlParam.Save(IOs.RootDir + "Parametrs.xml");
                     return true;
                 }
                 catch (Exception e)
                 {
                     Console.WriteLine(e);
-                    Data.Log += $"{DateTime.Now} {e} \n";
+                    Logs.Log += $"{DateTime.Now} {e} \n";
                     return false;
                 }
             }
@@ -139,21 +138,6 @@ namespace obnovlytor
         private static void GetBuff(object sender, ConsoleCancelEventArgs args)
         {
             Data.Buffer = Clipboard.GetText();
-        }
-        static void SetPath()
-        {
-            Reqistry.GetKey();
-            if (File.Exists(Version.ImagePathAgent + @"\backup.path"))
-            {
-                File.Delete(Version.ImagePathAgent + @"\backup.path");
-            }
-            using (FileStream fstream = new FileStream(Version.ImagePathAgent + @"\backup.path", FileMode.OpenOrCreate))
-            {
-                using (StreamWriter sw = new StreamWriter(fstream, Encoding.Default))
-                {
-                    sw.Write(Request.LocalPath);
-                }
-            }
         }
     }
 }

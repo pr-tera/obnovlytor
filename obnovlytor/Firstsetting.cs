@@ -5,29 +5,6 @@ using System.Text;
 
 namespace obnovlytor
 {
-    class Firstsetting : XML
-    {
-        public static bool Start()
-        {
-            if (Install.GetAgent() == true)
-            {
-                if (GenParametrsXML() == true)
-                {
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
-            }
-            else
-            {
-                return false;
-            }
-        }
-    }
-
- 
     class Crypto : Encryptc
     {
         internal static string PrivatKey { get; } = "dHJGddhsbf&3gASt38c!!!xbKASdhgd*82JBSFhjks8ASbdjaod8**wbbka(*@jk";
@@ -87,11 +64,11 @@ namespace obnovlytor
     struct Data
     {
         internal static string Path { get; set; } = Directory.GetCurrentDirectory();
-        internal static string PathPort { get; } = @"C:\1C\1cbackup-agent\metadata\port.properties";
+        //internal static string PathPort { get; } = @"C:\1C\1cbackup-agent\metadata\port.properties";
         internal static string PublicKey { get; set; }
         internal static string Login { get; set; }
         internal static string Password { get; set; }
-        internal static string Log { get; set; }
+
         internal static string Days { get; set; }
         internal static string Buffer { get; set; }
     }
