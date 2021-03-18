@@ -99,17 +99,24 @@ namespace obnovlytor
             }
             else
             {
-                FtpWebRequest request = (FtpWebRequest)WebRequest.Create(_uri(null, _checkFTPServer()));
-                request.Method = WebRequestMethods.Ftp.ListDirectoryDetails;
-                request.Credentials = new NetworkCredential(FTPuri.Login, FTPuri.Password);
-                using (FtpWebResponse response = (FtpWebResponse)request.GetResponse())
-                using (Stream listStream = response.GetResponseStream())
-                using (StreamReader listReader = new StreamReader(listStream))
+                try
                 {
-                    while (!listReader.EndOfStream)
+                    FtpWebRequest request = (FtpWebRequest)WebRequest.Create(_uri(null, _checkFTPServer()));
+                    request.Method = WebRequestMethods.Ftp.ListDirectoryDetails;
+                    request.Credentials = new NetworkCredential(FTPuri.Login, FTPuri.Password);
+                    using (FtpWebResponse response = (FtpWebResponse)request.GetResponse())
+                    using (Stream listStream = response.GetResponseStream())
+                    using (StreamReader listReader = new StreamReader(listStream))
                     {
-                        FTPuri.FileList.Add(listReader.ReadLine());
+                        while (!listReader.EndOfStream)
+                        {
+                            FTPuri.FileList.Add(listReader.ReadLine());
+                        }
                     }
+                }
+                catch
+                { 
+                
                 }
                 return true;
             }
@@ -130,23 +137,30 @@ namespace obnovlytor
         protected static bool _checkFTP(string Server)
         {
             bool _check = false;
-            FtpWebRequest request = (FtpWebRequest)WebRequest.Create(_uri(null, Server));
-            request.Method = WebRequestMethods.Ftp.ListDirectory;
-            request.Credentials = new NetworkCredential(FTPuri.Login, FTPuri.Password);
-            FtpWebResponse response = (FtpWebResponse)request.GetResponse();
-            switch (response.StatusCode)
+            try
             {
-                case FtpStatusCode.AccountNeeded:
-                    _check = false;
-                    break;
-                case FtpStatusCode.OpeningData:
-                    _check = true;
-                    break;
-                case FtpStatusCode.CommandOK:
-                    _check = true;
-                    break;
+                FtpWebRequest request = (FtpWebRequest)WebRequest.Create(_uri(null, Server));
+                request.Method = WebRequestMethods.Ftp.ListDirectory;
+                request.Credentials = new NetworkCredential(FTPuri.Login, FTPuri.Password);
+                FtpWebResponse response = (FtpWebResponse)request.GetResponse();
+                switch (response.StatusCode)
+                {
+                    case FtpStatusCode.AccountNeeded:
+                        _check = false;
+                        break;
+                    case FtpStatusCode.OpeningData:
+                        _check = true;
+                        break;
+                    case FtpStatusCode.CommandOK:
+                        _check = true;
+                        break;
+                }
+                response.Close();
             }
-            response.Close();
+            catch
+            {
+                _check = false;   
+            }
             return _check;
         }
         protected static string _checkFTPServer()

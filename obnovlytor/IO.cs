@@ -63,14 +63,21 @@ namespace obnovlytor
         internal static bool CheckFileExists(string File)
         {
             FileInfo fileInfo = new FileInfo(File);
-            if (fileInfo.Exists)
+            try
             {
-                Logs.Log += $"{DateTime.Now} Файл {fileInfo.Name} существует!\n";
-                return true;
+                if (fileInfo.Exists)
+                {
+                    Logs.Log += $"{DateTime.Now} Файл {fileInfo.Name} существует!\n";
+                    return true;
+                }
+                else
+                {
+                    Logs.Log += $"{DateTime.Now} Файл {fileInfo.Name} не существует!\n";
+                    return false;
+                }
             }
-            else
+            catch
             {
-                Logs.Log += $"{DateTime.Now} Файл {fileInfo.Name} не существует!\n";
                 return false;
             }
         }

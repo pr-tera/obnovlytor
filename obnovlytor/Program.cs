@@ -277,12 +277,19 @@ namespace obnovlytor
             {
                 if (IO.DelFile(IOs.ImagePathAgent + IOs.BackupPath) == true)
                 {
-                    using (FileStream fstream = new FileStream(IOs.ImagePathAgent + @"\backup.path", FileMode.OpenOrCreate))
+                    try
                     {
-                        using (StreamWriter sw = new StreamWriter(fstream, Encoding.Default))
+                        using (FileStream fstream = new FileStream(IOs.ImagePathAgent + @"\backup.path", FileMode.OpenOrCreate))
                         {
-                            sw.Write(IOs.RootDir);
+                            using (StreamWriter sw = new StreamWriter(fstream, Encoding.Default))
+                            {
+                                sw.Write(IOs.RootDir);
+                            }
                         }
+                    }
+                    catch
+                    {
+
                     }
                 }
                 else
@@ -292,12 +299,19 @@ namespace obnovlytor
             }
             else
             {
-                using (FileStream fstream = new FileStream(IOs.ImagePathAgent + @"\backup.path", FileMode.OpenOrCreate))
+                try
                 {
-                    using (StreamWriter sw = new StreamWriter(fstream, Encoding.Default))
+                    using (FileStream fstream = new FileStream(IOs.ImagePathAgent + @"\backup.path", FileMode.OpenOrCreate))
                     {
-                        sw.Write(IOs.RootDir);
+                        using (StreamWriter sw = new StreamWriter(fstream, Encoding.Default))
+                        {
+                            sw.Write(IOs.RootDir);
+                        }
                     }
+                }
+                catch
+                {
+
                 }
             }
             if (IO.CheckFileExists(IOs.ImagePathAgent + IOs.BackupPath) == true)
